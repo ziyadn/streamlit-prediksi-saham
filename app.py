@@ -29,7 +29,7 @@ ticker = st.text_input('Ticker', value='AAPL')
 if st.button('Predict'):
     # Mendapatkan data saham 3 bulan terakhir
     end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=90)
+    start_date = end_date - timedelta(days=360)
     stock_data = yf.download(ticker, start=start_date, end=end_date)
     
     if not stock_data.empty:
@@ -62,7 +62,7 @@ if st.button('Predict'):
         prediction = pipeline.predict(input_data)
 
         # Menampilkan grafik garis harga penutupan 3 bulan terakhir
-        fig = px.line(stock_data, x=stock_data.index, y='Close', title=f'3-Month Close Prices for {ticker}')
+        fig = px.line(stock_data, x=stock_data.index, y='Close', title=f'1 Year Close Prices for {ticker}')
         st.plotly_chart(fig)
 
         # Menampilkan harga penutupan terbaru dalam format Rupiah
