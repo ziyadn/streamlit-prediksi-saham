@@ -18,26 +18,28 @@ def calculate_features(data):
     data = data.fillna(0)
     return data
 
-# Judul aplikasi
-st.title('Stock Price Prediction')
+# Sidebar for inputs
+st.sidebar.header('Input Saham')
+ticker = st.sidebar.text_input('Ticker', value='AAPL')
+predict_button = st.sidebar.button('Prediksi Harga Saham')
 
-# Input ticker saham
-st.header('Input Ticker Saham')
-ticker = st.text_input('Ticker', value='AAPL')
+# Main panel for outputs
+st.title('Prediksi Harga Saham')
+st.write('Aplikasi ini memprediksi harga penutupan saham untuk hari berikutnya.')
 
-# Tombol untuk mengambil data dan melakukan prediksi
-if st.button('Predict'):
-    # Mendapatkan data saham 3 bulan terakhir
-    end_date = datetime.today().date()
-    start_date = end_date - timedelta(days=360)
-    stock_data = yf.download(ticker, start=start_date, end=end_date)
-    
-    if not stock_data.empty:
-        # Menghitung fitur tambahan untuk seluruh data
-        stock_data = calculate_features(stock_data)
+if predict_button:
+    with st.spinner('Mengambil data dan melakukan prediksi...'):
+        # Mendapatkan data saham 3 bulan terakhir
+        end_date = datetime.today().date()
+        start_date = end_date - timedelta(days=360)
+        stock_data = yf.download(ticker, start=start_date, end=end_date)
         
-        # Mengambil data terbaru setelah menghitung fitur tambahan
-        latest_data = stock_data.iloc[-1]
+        if not stock_data.empty:
+            # Menghitung fitur tambahan untuk seluruh data
+            stock_data = calculate_features(stock_data)
+
+            # Mengambil data terbaru setelah menghitung fitur tambahan
+            latest_data = stock_data.iloc[-1]
         Open = latest_data['Open']
         High = latest_data['High']
         Low = latest_data['Low']
@@ -61,14 +63,16 @@ if st.button('Predict'):
         # Melakukan prediksi menggunakan pipeline
         prediction = pipeline.predict(input_data)
 
-        # Menampilkan grafik garis harga penutupan 3 bulan terakhir
-        fig = px.line(stock_data, x=stock_data.index, y='Close', title=f'1 Year Close Prices for {ticker}')
+        # Menampilkan grafik garis harga penutupan
+        st.subheader(f'Grafik Harga Penutupan 1 Tahun untuk {ticker}')
+        fig = px.line(stock_data, x=stock_data.index, y='Close')
+        fig.update_layout(yaxis_title="Harga Penutupan (Rp)")
         st.plotly_chart(fig)
 
-        # Menampilkan harga penutupan terbaru dalam format Rupiah
-        st.subheader(f'Latest Close Price for {ticker}: Rp{Close:.2f}')
-
-        # Menampilkan hasil prediksi dalam format Rupiah
-        st.subheader(f'Predicted Close Price for {ticker}: Rp{prediction[0]:.2f}')
+        # Menampilkan hasil prediksi
+        st.subheader('Hasil Prediksi')
+        col1, col2 = st.columns(2)
+        col1.metric(label=f"Harga Penutupan Terakhir ({latest_data.name.date()})", value=f"Rp{Close:,.2f}")
+        col2.metric(label="Prediksi Harga Penutupan Berikutnya", value=f"Rp{prediction[0]:,.2f}", delta=f"{prediction[0] - Close:,.2f}")
     else:
-        st.error(f'No data found for ticker: {ticker}')
+        st.error(f'Tidak ada data yang ditemukan untuk ticker: {ticker}')
